@@ -11,6 +11,11 @@ describe('Quiz Component', () => {
     });
   });
 
+  beforeEach(() => {
+    // Intercept and mock the API call with the fixture data
+    cy.intercept('GET', '/api/questions/random', { fixture: 'pythonQuestions.json' }).as('getQuestions');
+  });
+
   it('renders the Start Quiz button initially', () => {
     cy.mount(<Quiz />);
     cy.get('button').contains('Start Quiz').should('be.visible');
@@ -19,87 +24,74 @@ describe('Quiz Component', () => {
   it('starts the quiz and displays a valid question', () => {
     cy.mount(<Quiz />);
     cy.get('button').contains('Start Quiz').click();
+    cy.wait('@getQuestions'); // Ensure mock response is used
 
     // Verify the displayed question exists in the seeded data
-    cy.get('h2').then(($h2) => {
-      const displayedQuestion = $h2.text();
+    cy.get('[data-cy="question"]').should(($question) => {
+      const displayedQuestion = $question.text();
       const questionExists = seededQuestions.some((q) => q.question === displayedQuestion);
-      expect(questionExists).to.be.true;
+      expect(questionExists).to.be.true; // Assertion based on fixture data
     });
   });
 
-  it('allows clicking on the correct numbered button', () => {
+  it('allows answering questions and tracks progress correctly', () => {
     cy.mount(<Quiz />);
     cy.get('button').contains('Start Quiz').click();
+    cy.wait('@getQuestions'); // Wait for mocked questions
 
-    // Get the displayed question
-    cy.get('h2').then(($h2) => {
-      const displayedQuestion = $h2.text();
-      const currentQuestion = seededQuestions.find((q) => q.question === displayedQuestion);
+    // Answer all questions
+    for (let i = 0; i < 10; i++) {
+      cy.get('[data-cy="answer"]').first().click(); // Simulate choosing the first answer
+      cy.wait(500); // Simulate user delay between clicks
+    }
 
-      // Ensure the question was found
-      expect(currentQuestion).to.exist;
-
-      // Find the index of the correct answer
-      const correctAnswerIndex = currentQuestion.answers.findIndex((a) => a.isCorrect);
-
-      // Click the correct button
-      cy.get('button').contains(correctAnswerIndex + 1).click();
-
-      // Verify the question changes
-      cy.get('h2').should(($nextH2) => {
-        const nextQuestion = $nextH2.text();
-        expect(nextQuestion).to.not.equal(displayedQuestion); // Ensure it's a new question
-      });
-    });
+    // Verify quiz completion
+    cy.get('[data-cy="quiz-completed"]').should('be.visible');
   });
 
-  it('displays answers and transitions correctly after clicking a button', () => {
+  it('handles quiz completion and restart correctly', () => {
+    cy.mount(<Quiz />);
+
+    // Start the quiz
+    cy.get('button').contains('Start Quiz').click();
+    cy.wait('@getQuestions'); // Wait for the mocked response
+
+    // Answer all questions
+    for (let i = 0; i < 10; i++) {
+      cy.get('[data-cy="answer"]').first().click();
+      cy.wait(500); // Simulate user delay between clicks
+    }
+
+    // Verify completion
+    cy.get('[data-cy="quiz-completed"]').should('be.visible');
+    cy.contains('Take New Quiz').click();
+
+    // Verify a new quiz starts
+    cy.wait('@getQuestions'); // Ensure a new set of questions is fetched
+    cy.get('[data-cy="question"]').should('be.visible'); // Check that the new quiz begins
+    cy.get('[data-cy="quiz-completed"]').should('not.exist'); // Ensure quiz-completed state is reset
+  });
+
+  it('displays the correct answers for each question', () => {
     cy.mount(<Quiz />);
     cy.get('button').contains('Start Quiz').click();
+    cy.wait('@getQuestions'); // Wait for mocked questions
 
-    // Get the displayed question
-    cy.get('h2').then(($h2) => {
-      const displayedQuestion = $h2.text();
-      const currentQuestion = seededQuestions.find((q) => q.question === displayedQuestion);
+    seededQuestions.forEach((question, index) => {
+      // Verify the question
+      cy.get('[data-cy="question"]').should('contain', question.question);
 
-      // Ensure the question was found
-      expect(currentQuestion).to.exist;
-
-      // Verify that the answers for the current question are displayed
-      currentQuestion.answers.forEach((answer) => {
+      // Verify answers are displayed
+      question.answers.forEach((answer) => {
         cy.get('div.alert').should('contain', answer.text); // Assuming answers are in alert divs
       });
 
-      // Find the index of the correct answer
-      const correctAnswerIndex = currentQuestion.answers.findIndex((a) => a.isCorrect);
-
-      // Click the correct button
-      cy.get('button').contains(correctAnswerIndex + 1).click();
-
-      // Verify the question changes
-      cy.get('h2').should(($nextH2) => {
-        const nextQuestion = $nextH2.text();
-        expect(nextQuestion).to.not.equal(displayedQuestion); // Ensure it's a new question
-      });
-
-      // Verify the answers for the new question are displayed
-      cy.get('h2').then(($nextH2) => {
-        const nextQuestion = $nextH2.text();
-        const nextQuestionData = seededQuestions.find((q) => q.question === nextQuestion);
-
-        // Ensure the next question exists
-        expect(nextQuestionData).to.exist;
-
-        nextQuestionData.answers.forEach((answer) => {
-          cy.get('div.alert').should('contain', answer.text); // Check if each answer is displayed
-        });
-      });
+      // Click an answer to transition to the next question
+      cy.get('[data-cy="answer"]').first().click();
+      if (index < 9) cy.wait(500); // Prevent excessive waits on the last question
     });
+
+    // Ensure the quiz completes at the end
+    cy.get('[data-cy="quiz-completed"]').should('be.visible');
   });
 });
-
-
-
-
-
