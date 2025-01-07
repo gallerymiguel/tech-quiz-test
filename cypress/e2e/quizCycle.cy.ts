@@ -2,7 +2,7 @@ describe('Complete Quiz Functionality', () => {
   beforeEach(() => {
     // Mock the response with 10 questions from the server
     cy.intercept('GET', '/api/questions/random', { fixture: 'pythonQuestions.json' }).as('getQuestions');
-    cy.visit('/quiz');
+    cy.visit('http://127.0.0.1:3001/');
   });
 
   it('should complete the entire quiz by answering 10 questions and restart correctly', () => {
