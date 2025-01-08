@@ -44,5 +44,20 @@ npm run cypress
 ```
 These tests help ensure that the quiz components function correctly and that the user interactions produce the expected outcomes.
 
+## Video Walkthrough
+
+For a detailed demonstration of the application's functionality, please refer to our video walkthrough. This video provides a comprehensive overview of the features and user interactions within our Tech Quiz platform. You can view the video at the following link:
+
+[Video Walkthrough of the Tech Quiz Application](https://drive.google.com/file/d/1ydl_y6Dpd2Esoh5SzUwS4v51qhULWZvt/view?usp=sharing)
+
+In the video, we cover the following aspects:
+- A tour of the user interface and various features.
+- Step-by-step demonstrations of each functionality, including how to take a quiz and view results.
+- An overview of the backend API interactions.
+- Examples of both component and end-to-end testing in action.
+
+Please ensure you have access to YouTube or the platform where the video is hosted to view the walkthrough. If you encounter any issues accessing the video, do not hesitate to contact us.
+
+
 ### License
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE) file for details.
